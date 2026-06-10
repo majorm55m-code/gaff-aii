@@ -1,0 +1,69 @@
+version: "3.8"
+
+services:
+  bedrock:
+    image: itzg/minecraft-bedrock-server:latest
+    container_name: bedrock-server
+    restart: unless-stopped
+    environment:
+      EULA: "TRUE"
+      VERSION: "1.26.23.1"
+      SERVER_NAME: "Bedrock Server"
+      GAMEMODE: survival
+      DIFFICULTY: normal
+      MAX_PLAYERS: 100
+      VIEW_DISTANCE: 10
+      TICK_DISTANCE: 4
+      PLAYER_IDLE_TIMEOUT: 30
+      MAX_THREADS: 8
+      LEVEL_NAME: BedrockLevel
+      LEVEL_SEED: ""
+      ONLINE_MODE: true
+      WHITE_LIST: false
+      ALLOW_LIST: false
+      SERVER_PORT: 19132
+      SERVER_PORT_V6: 19133
+      TEXTUREPACK_REQUIRED: false
+      SERVER_AUTHORITATIVE_MOVEMENT: server-auth
+      PLAYER_MOVEMENT_SCORE_THRESHOLD: 20
+      PLAYER_MOVEMENT_DISTANCE_THRESHOLD: 0.3
+      PLAYER_MOVEMENT_DURATION_THRESHOLD_IN_MS: 500
+      CORRECT_PLAYER_MOVEMENT: true
+    volumes:
+      - bedrock-data:/data
+    networks:
+      - mc-network
+    stdin_open: true
+    tty: true
+    healthcheck:
+      test: ["CMD", "nc", "-zu", "localhost", "19132"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  playit:
+    image: ghcr.io/playit-cloud/playit-agent:0.17
+    container_name: playit-agent
+    restart: unless-stopped
+    environment:
+      - SECRET_KEY=${PLAYIT_SECRET_KEY}
+    volumes:
+      - playit-data:/etc/playit
+    networks:
+      - mc-network
+    depends_on:
+      bedrock:
+        condition: service_healthy
+    stdin_open: true
+    tty: true
+
+volumes:
+  bedrock-data:
+    driver: local
+  playit-data:
+    driver: local
+
+networks:
+  mc-network:
+    driver: bridge
