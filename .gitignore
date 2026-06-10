@@ -1,0 +1,4 @@
+.env
+*.log
+bedrock-data/
+playit-data/
